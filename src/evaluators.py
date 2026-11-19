@@ -81,3 +81,27 @@ def evaluate_test_retest_reliability(outputs: List[str]) -> EvaluationResult:
     passed = len(unique_outputs) == 1
     reasons = [] if passed else [f"Inconsistent outputs across {len(outputs)} runs: {len(unique_outputs)} variants"]
     return EvaluationResult(passed=passed, score=round(consistency_ratio, 2), reasons=reasons)
+
+
+def evaluate_rubric(
+    response_text: str,
+    latency_ms: float,
+    max_latency_ms: float,
+    min_length: int = 15,
+) -> EvaluationResult:
+    """
+    Rubric-based quality scorer evaluating completeness, conciseness, and latency SLA.
+    """
+    reasons: List[str] = []
+    score = 1.0
+
+    if len(response_text.strip()) < min_length:
+        score -= 0.5
+        reasons.append(f"Response too short ({len(response_text.strip())} chars < {min_length})")
+
+    if latency_ms > max_latency_ms:
+        score -= 0.5
+        reasons.append(f"Latency {latency_ms:.1f}ms exceeded SLA {max_latency_ms}ms")
+
+    score = max(0.0, round(score, 2))
+    return EvaluationResult(passed=score >= 0.8, score=score, reasons=reasons)
