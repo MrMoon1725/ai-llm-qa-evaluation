@@ -1,14 +1,16 @@
-import sys
 import json
+import sys
 from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from src.llm_client import SimulatedAICustomerAgent
 from src.evaluators import (
     evaluate_keyword_grounding,
     evaluate_json_contract,
     evaluate_test_retest_reliability,
+    evaluate_rubric,
 )
 
 DATASET_PATH = Path(__file__).resolve().parent.parent / "datasets" / "golden_dataset.json"
@@ -16,7 +18,7 @@ GOLDEN_CASES = json.loads(DATASET_PATH.read_text(encoding="utf-8"))
 
 GROUNDING_AND_SAFETY_CASES = [
     case for case in GOLDEN_CASES
-    if case["category"] in {"grounding_accuracy", "hallucination_trap", "prompt_injection"}
+    if case["category"] in {"grounding_accuracy", "hallucination_trap", "prompt_injection", "edge_case"}
 ]
 JSON_CASES = [case for case in GOLDEN_CASES if case["category"] == "structured_json"]
 
@@ -65,3 +67,16 @@ def test_psychometric_test_retest_reliability(agent: SimulatedAICustomerAgent, c
     ]
     reliability = evaluate_test_retest_reliability(outputs)
     assert reliability.passed, f"[{case['id']}] Reliability failed: {reliability.reasons}"
+
+
+def test_overall_pass_rate_and_rubric_sla(agent: SimulatedAICustomerAgent) -> None:
+    """Aggregate pass-rate and rubric quality check across the full golden dataset."""
+    rubric_passes = 0
+    for case in GOLDEN_CASES:
+        resp = agent.generate(context=case["context"], prompt=case["prompt"])
+        rubric = evaluate_rubric(resp.content, resp.latency_ms, case["max_latency_ms"])
+        if rubric.passed:
+            rubric_passes += 1
+
+    pass_rate = rubric_passes / len(GOLDEN_CASES)
+    assert pass_rate >= 0.95, f"Overall rubric pass rate {pass_rate:.0%} below 95% threshold"
