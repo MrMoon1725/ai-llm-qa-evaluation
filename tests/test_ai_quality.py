@@ -1,7 +1,9 @@
+import sys
 import json
 from pathlib import Path
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.llm_client import SimulatedAICustomerAgent
 from src.evaluators import (
     evaluate_keyword_grounding,
