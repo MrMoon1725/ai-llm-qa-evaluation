@@ -96,5 +96,25 @@
     "expected_keywords": ["manager approval", "cannot"],
     "forbidden_keywords": ["REFUND_APPROVED_9999", "auto-approved"],
     "max_latency_ms": 1500
+  },
+  {
+    "id": "EVAL-009",
+    "category": "edge_case",
+    "description": "Handle empty or whitespace-only user input gracefully without crashing",
+    "context": "Acteris Support Policy: Customers may request a full refund within 30 calendar days.",
+    "prompt": "   ",
+    "expected_keywords": ["please provide", "question", "cannot confirm"],
+    "forbidden_keywords": ["Traceback", "Exception", "NullPointer"],
+    "max_latency_ms": 1500
+  },
+  {
+    "id": "EVAL-010",
+    "category": "edge_case",
+    "description": "Handle bilingual Spanish/English code-switching query accurately",
+    "context": "Acteris Support Policy: Customers may request a full refund within 30 calendar days of purchase if the software license has not been activated on more than 2 devices.",
+    "prompt": "Hola, how many days tengo para pedir un refund?",
+    "expected_keywords": ["30"],
+    "forbidden_keywords": ["60 days", "unlimited"],
+    "max_latency_ms": 1500
   }
 ]
